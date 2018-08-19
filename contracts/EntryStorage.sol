@@ -32,9 +32,44 @@ contract EntryStorage {
         uint8 size;
     }
 
-    // Checks if the entry exist
+    // Checks if the entry exist.
     modifier entryExist(uint _entryId) {
         require(entryCount >= _entryId);
+        _;
+    }
+
+    // Checks if submission exist.
+    modifier submissionExist(uint _entryId, uint _submissionId) {
+        require(entries[_entryId].submissionCount >= _submissionId);
+        _;
+    }
+
+    modifier isEntryOwner(uint _entryId, address _address) {
+        require(entries[_entryId].owner == _address);
+        _;
+    }
+
+    // Checks if the entry is in Open state.
+    modifier isOpen(uint _entryId) {
+        require(entries[_entryId].state == uint(State.Open));
+        _;
+    }
+
+    // Checks if the entry is in Submitted state.
+    modifier isSubmitted(uint _entryId) {
+        require(entries[_entryId].state == uint(State.Submitted));
+        _;
+    }
+
+    // Checks if the entry is in Canceled state.
+    modifier isCanceled(uint _entryId) {
+        require(entries[_entryId].state == uint(State.Canceled));
+        _;
+    }
+
+    // Checks if the entry is in Done state.
+    modifier isDone(uint _entryId) {
+        require(entries[_entryId].state == uint(State.Done));
         _;
     }
 
@@ -72,8 +107,11 @@ contract EntryStorage {
         return(e.id, e.owner, e.bounty, e.unsafeCreatedTimestamp, e.submissionCount, e.state, e.isBountyCollected);
     }
 
-    function cancelEntry(uint _entryId) public {
-        // TODO: We can only cancel open entries
+    function cancelEntry(uint _entryId) 
+        public 
+        entryExist(_entryId)
+        isEntryOwner(_entryId, msg.sender)
+        isOpen(_entryId) {
         entries[_entryId].state = uint(State.Canceled);
         entries[_entryId].owner.transfer(entries[_entryId].bounty);
     }
@@ -85,6 +123,8 @@ contract EntryStorage {
         // uint8 _directorySize
     ) public entryExist(_entryId) {
         Entry storage e = entries[_entryId];
+        // Its only possible to submit when an entry state is Open or Submitted
+        require(e.state == uint(State.Open) || e.state == uint(State.Submitted));
         e.submissionCount = e.submissionCount + 1;
 
         // Multihash memory _directoryHash = Multihash(
@@ -104,6 +144,7 @@ contract EntryStorage {
     function getSubmission(uint _entryId, uint _submissionId)
         public view
         entryExist(_entryId)
+        submissionExist(_entryId, _submissionId)
         returns (uint, address, uint) {
         Entry storage e = entries[_entryId];
         return (
@@ -115,7 +156,10 @@ contract EntryStorage {
 
     function acceptSubmission(uint _entryId, uint _submissionId)
         public
-        entryExist(_entryId) {
+        entryExist(_entryId)
+        submissionExist(_entryId, _submissionId)
+        isEntryOwner(_entryId, msg.sender)
+        isSubmitted(_entryId) {
         Entry storage e = entries[_entryId];
         e.state = uint(State.Done);
         e.acceptedSubmission = e.submissions[_submissionId];
@@ -124,6 +168,7 @@ contract EntryStorage {
     function getAcceptedSubmission(uint _entryId)
         public view
         entryExist(_entryId)
+        submissionExist(_entryId, entries[_entryId].acceptedSubmission.id)
         returns (uint, address, uint) {
         return (
             entries[_entryId].acceptedSubmission.id,
@@ -134,11 +179,16 @@ contract EntryStorage {
 
     function claimBounty(uint _entryId) 
         public 
-        entryExist(_entryId) {
+        entryExist(_entryId)
+        submissionExist(_entryId, entries[_entryId].acceptedSubmission.id)
+        isDone(_entryId) {
         Entry storage e = entries[_entryId];
+        // Check if bounty has not been collected
+        require(e.isBountyCollected == false, "Bounty has already been collected");
+        address _acceptedOwner = e.acceptedSubmission.owner;
+        require(_acceptedOwner == msg.sender);
         e.isBountyCollected = true;
-        address _owner = e.acceptedSubmission.owner;
-        _owner.transfer(e.bounty);
+        _acceptedOwner.transfer(e.bounty);
     }
 
 }
