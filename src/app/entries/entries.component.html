@@ -1,0 +1,26 @@
+<mat-card class="external-card">
+
+  <mat-card-header>
+    <mat-card-title>List of entries</mat-card-title>
+  </mat-card-header>
+
+  <mat-card *ngFor="let entry of entries" class="entry">
+    <mat-card-header>
+      <div mat-card-avatar class="header-image"></div>
+      <mat-card-title>{{ entry.owner }}</mat-card-title>
+      <mat-card-subtitle>ID: {{ entry.id }}</mat-card-subtitle>
+    </mat-card-header>
+    <!--<img mat-card-image src="https://material.angular.io/assets/img/examples/shiba2.jpg" alt="Photo of a Shiba Inu">-->
+    <mat-card-content>
+      <p>Bounty: {{ entry.bounty }} ETH</p>
+      <p>Created at: {{ entry.unsafeCreatedTimestamp }}</p>
+      <p>Nº of submissions: {{ entry.submissionCount }}</p>
+      <p>State: {{ entry.state }}</p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-button>CANCEL</button>
+      <button mat-button>SEE DETAILS</button>
+    </mat-card-actions>
+  </mat-card>
+
+</mat-card>

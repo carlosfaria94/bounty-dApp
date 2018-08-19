@@ -44,15 +44,23 @@ contract EntryStorage {
 
         // Multihash memory _directoryHash = Multihash(
         //    _directoryDigest, _directoryHashFunction, _directorySize);
-
-        entries[entryCount].id = entryCount;
-        entries[entryCount].owner = msg.sender;
-        entries[entryCount].bounty = msg.value;
-        // entries[entryCount].directoryHash = _directoryHash;
+        Entry memory entry;
+        entry.id = entryCount;
+        entry.owner = msg.sender;
+        entry.bounty = msg.value;
+        // entry.directoryHash = _directoryHash;
         // This timestamp will not be used for critical contract logic, only as reference
-        entries[entryCount].unsafeCreatedTimestamp = block.timestamp;
-        entries[entryCount].submissionCount = 0;
-        entries[entryCount].state = uint(State.Open);
+        entry.unsafeCreatedTimestamp = block.timestamp;
+        entry.submissionCount = 0;
+        entry.state = uint(State.Open);
+        entries[entryCount] = entry;
+    }
+
+    function getEntry(uint _entryId)
+        public view 
+        returns (uint, address, uint, uint, uint, uint) {
+        Entry storage e = entries[_entryId];
+        return(e.id, e.owner, e.bounty, e.unsafeCreatedTimestamp, e.submissionCount, e.state);
     }
 
     function cancelEntry(uint _entryId) public {
