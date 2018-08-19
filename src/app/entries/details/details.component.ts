@@ -44,11 +44,15 @@ export class DetailsComponent implements OnInit {
         if (this.entry.submissionCount > 0) {
           this.getSubmissions();
         }
+        if (this.entry.state === 'Done') {
+          this.getAcceptedSubmission();
+        }
+        console.log(this.entry);
       });
   }
 
   async getSubmissions() {
-    console.log('Get submissions...');
+    console.log('Geting submissions...');
     this.submissions = [];
     try {
       const deployedEntryStorage = await this.EntryStorage.deployed();
@@ -63,6 +67,25 @@ export class DetailsComponent implements OnInit {
         });
       }
       this.submissions.reverse();
+    } catch (e) {
+      console.log(e);
+      this.setStatus(e.message + ' See log for more info');
+    }
+  }
+
+  async getAcceptedSubmission() {
+    console.log('Geting accepted submission...');
+    try {
+      const deployedEntryStorage = await this.EntryStorage.deployed();
+      const entryId = this.entry.id;
+      const acceptedSubmission = await deployedEntryStorage.getAcceptedSubmission.call(
+        entryId
+      );
+      this.entry.acceptedSubmission = {
+        id: acceptedSubmission[0].toNumber(),
+        owner: acceptedSubmission[1],
+        unsafeCreatedTimestamp: this.getDate(acceptedSubmission[2].toNumber())
+      };
     } catch (e) {
       console.log(e);
       this.setStatus(e.message + ' See log for more info');
@@ -102,6 +125,32 @@ export class DetailsComponent implements OnInit {
     try {
       const deployedEntryStorage = await this.EntryStorage.deployed();
       const transaction = await deployedEntryStorage.submit.sendTransaction(
+        this.entry.id,
+        { from: this.account }
+      );
+
+      if (!transaction) {
+        this.setStatus('Transaction failed!');
+      } else {
+        this.setStatus('Transaction complete!');
+      }
+    } catch (e) {
+      console.log(e);
+      this.setStatus(e.message + ' See log for more info');
+    }
+  }
+
+  async claimBounty() {
+    if (!this.EntryStorage) {
+      this.setStatus(
+        'EntryStorage contract is not loaded, unable to claim the bounty'
+      );
+      return;
+    }
+    this.setStatus('Claiming the bounty, please wait');
+    try {
+      const deployedEntryStorage = await this.EntryStorage.deployed();
+      const transaction = await deployedEntryStorage.claimBounty.sendTransaction(
         this.entry.id,
         { from: this.account }
       );

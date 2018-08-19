@@ -11,8 +11,28 @@
   <br>
 
   <div *ngIf="entry.submissionCount > 0">
+    <div *ngIf="entry.acceptedSubmission && entry.state === 'Done'">
+      <h4 mat-dialog-title>Accepted submission</h4>
+      <mat-accordion>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              {{ entry.acceptedSubmission.owner }}
+            </mat-panel-title>
+            <mat-panel-description>
+              Created at {{ entry.acceptedSubmission.unsafeCreatedTimestamp | date }}
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          ID: {{ entry.acceptedSubmission.id }}
+        </mat-expansion-panel>
+      </mat-accordion>
+      <br>
+      <br>
+    </div>
+
     <h4 mat-dialog-title *ngIf="entry.state !== 'Done'">List of all submissions</h4>
-    <h4 mat-dialog-title *ngIf="entry.state == 'Done'">History of submissions</h4>
+    <h4 mat-dialog-title *ngIf="entry.state === 'Done'">History of submissions</h4>
     <mat-accordion>
       <mat-expansion-panel *ngFor="let submission of submissions">
         <mat-expansion-panel-header>
@@ -31,21 +51,28 @@
     <br>
   </div>
 
-  <div *ngIf="entry.state == 'Canceled'">
+  <div *ngIf="entry.state === 'Canceled'">
     <h4 mat-dialog-title>Not accepting submissions. Bounty canceled.</h4>
   </div>
 
-  <div *ngIf="entry.state == 'Done'">
+  <div *ngIf="entry.state === 'Done'">
     <h4 mat-dialog-title>Not accepting more submissions. The bounty it's finished.</h4>
   </div>
 
-  <div *ngIf="entry.state == 'Open' || entry.state == 'Submitted'">
+  <div *ngIf="entry.state === 'Open' || entry.state === 'Submitted'">
     <h4 mat-dialog-title>Submit your work</h4>
   </div>
 
 </mat-dialog-content>
 
-<mat-dialog-actions *ngIf="entry.state == 'Open' || entry.state == 'Submitted'">
-  <button *ngIf="entry.state == 'Open'" mat-raised-button (click)="cancelEntry()">CANCEL BOUNTY</button>
-  <button mat-raised-button (click)="submit()">SUBMIT YOUR WORK</button>
+<mat-dialog-actions>
+  <button *ngIf="entry.state === 'Open'" mat-raised-button (click)="cancelEntry()">
+    CANCEL BOUNTY
+  </button>
+  <button *ngIf="entry.state === 'Open' || entry.state === 'Submitted'" mat-raised-button (click)="submit()">
+    SUBMIT YOUR WORK
+  </button>
+  <button *ngIf="!entry.isBountyCollected && entry.state === 'Done'" mat-raised-button (click)="claimBounty()">
+    CLAIM YOUR {{ entry.bounty }} ETH BOUNTY
+  </button>
 </mat-dialog-actions>

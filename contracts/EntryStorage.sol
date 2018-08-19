@@ -14,6 +14,7 @@ contract EntryStorage {
         mapping (uint => Submission) submissions;
         Submission acceptedSubmission;
         uint state;
+        bool isBountyCollected;
     }
     
     enum State { Open, Submitted, Done, Canceled }
@@ -31,6 +32,12 @@ contract EntryStorage {
         uint8 size;
     }
 
+    // Checks if the entry exist
+    modifier entryExist(uint _entryId) {
+        require(entryCount >= _entryId);
+        _;
+    }
+
     constructor() public {
         entryCount = 0;
     }
@@ -44,23 +51,25 @@ contract EntryStorage {
 
         // Multihash memory _directoryHash = Multihash(
         //    _directoryDigest, _directoryHashFunction, _directorySize);
-        Entry memory entry;
-        entry.id = entryCount;
-        entry.owner = msg.sender;
-        entry.bounty = msg.value;
-        // entry.directoryHash = _directoryHash;
+        Entry memory e;
+        e.id = entryCount;
+        e.owner = msg.sender;
+        e.bounty = msg.value;
+        // e.directoryHash = _directoryHash;
         // This timestamp will not be used for critical contract logic, only as reference
-        entry.unsafeCreatedTimestamp = block.timestamp;
-        entry.submissionCount = 0;
-        entry.state = uint(State.Open);
-        entries[entryCount] = entry;
+        e.unsafeCreatedTimestamp = block.timestamp;
+        e.submissionCount = 0;
+        e.state = uint(State.Open);
+        e.isBountyCollected = false;
+        entries[entryCount] = e;
     }
 
     function getEntry(uint _entryId)
         public view 
-        returns (uint, address, uint, uint, uint, uint) {
+        entryExist(_entryId)
+        returns (uint, address, uint, uint, uint, uint, bool) {
         Entry storage e = entries[_entryId];
-        return(e.id, e.owner, e.bounty, e.unsafeCreatedTimestamp, e.submissionCount, e.state);
+        return(e.id, e.owner, e.bounty, e.unsafeCreatedTimestamp, e.submissionCount, e.state, e.isBountyCollected);
     }
 
     function cancelEntry(uint _entryId) public {
@@ -74,7 +83,7 @@ contract EntryStorage {
         // bytes32 _directoryDigest,
         // uint8 _directoryHashFunction,
         // uint8 _directorySize
-    ) public {
+    ) public entryExist(_entryId) {
         Entry storage e = entries[_entryId];
         e.submissionCount = e.submissionCount + 1;
 
@@ -94,6 +103,7 @@ contract EntryStorage {
 
     function getSubmission(uint _entryId, uint _submissionId)
         public view
+        entryExist(_entryId)
         returns (uint, address, uint) {
         Entry storage e = entries[_entryId];
         return (
@@ -103,10 +113,32 @@ contract EntryStorage {
         );
     }
 
-    function acceptSubmission(uint _entryId, uint _submissionId) public {
+    function acceptSubmission(uint _entryId, uint _submissionId)
+        public
+        entryExist(_entryId) {
         Entry storage e = entries[_entryId];
         e.state = uint(State.Done);
         e.acceptedSubmission = e.submissions[_submissionId];
+    }
+
+    function getAcceptedSubmission(uint _entryId)
+        public view
+        entryExist(_entryId)
+        returns (uint, address, uint) {
+        return (
+            entries[_entryId].acceptedSubmission.id,
+            entries[_entryId].acceptedSubmission.owner,
+            entries[_entryId].acceptedSubmission.unsafeCreatedTimestamp
+        );
+    }
+
+    function claimBounty(uint _entryId) 
+        public 
+        entryExist(_entryId) {
+        Entry storage e = entries[_entryId];
+        e.isBountyCollected = true;
+        address _owner = e.acceptedSubmission.owner;
+        _owner.transfer(e.bounty);
     }
 
 }

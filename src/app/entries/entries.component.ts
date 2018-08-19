@@ -82,7 +82,8 @@ export class EntriesComponent implements OnInit {
           ),
           unsafeCreatedTimestamp: this.getDate(entry[3].toNumber()),
           submissionCount: entry[4].toNumber(),
-          state: this.getState(entry[5].toNumber())
+          state: this.getState(entry[5].toNumber()),
+          isBountyCollected: entry[6]
         });
       }
       this.entries.reverse();
