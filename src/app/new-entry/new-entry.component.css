@@ -1,3 +1,9 @@
 .mat-card {
   margin-top: 20px;
 }
+
+.new-bounty {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+}

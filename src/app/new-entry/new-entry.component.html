@@ -4,13 +4,13 @@
 
 <mat-card>
   <mat-card-header>New Bounty</mat-card-header>
-  <mat-card-content>
+  <mat-card-content class="new-bounty">
+    <mat-form-field>
+      <textarea matInput placeholder="Specification" rows="10" (change)="setSpecification($event)"></textarea>
+    </mat-form-field>
     <mat-form-field>
       <input type="number" matInput id="bounty" placeholder="Bounty in ETH" (change)="setBounty($event)">
     </mat-form-field>
-    <!--<mat-form-field class="address-field">
-      <input type="text" matInput id="receiver" placeholder="Receiver Address" (change)="setReceiver($event)">
-    </mat-form-field>-->
-    <button mat-raised-button (click)="createBounty()">Create bounty</button>
+    <button mat-raised-button color="primary" (click)="createBounty()">Create bounty</button>
   </mat-card-content>
 </mat-card>
