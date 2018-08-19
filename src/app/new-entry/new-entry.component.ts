@@ -11,13 +11,11 @@ const entryStorageArtifacts = require('../../../build/contracts/EntryStorage.jso
   styleUrls: ['./new-entry.component.css']
 })
 export class NewEntryComponent implements OnInit {
-  accounts: string[];
+  account = '';
   EntryStorage: any;
   model = {
-    bounty: 0,
-    account: ''
+    bounty: 0
   };
-  status = '';
 
   constructor(
     private web3Service: Web3Service,
@@ -35,9 +33,7 @@ export class NewEntryComponent implements OnInit {
 
   watchAccount() {
     this.web3Service.accountsObservable.subscribe(accounts => {
-      this.accounts = accounts;
-      console.log(accounts);
-      this.model.account = accounts[0];
+      this.account = accounts[0];
     });
   }
 
@@ -60,7 +56,7 @@ export class NewEntryComponent implements OnInit {
       const deployedEntryStorage = await this.EntryStorage.deployed();
       const transaction = await deployedEntryStorage.addEntry.sendTransaction({
         value: this.web3Service.web3.utils.toWei(this.model.bounty, 'ether'),
-        from: this.model.account
+        from: this.account
       });
 
       if (!transaction) {
@@ -70,7 +66,7 @@ export class NewEntryComponent implements OnInit {
       }
     } catch (e) {
       console.log(e);
-      this.setStatus('Error sending coin; see log.');
+      this.setStatus(e.message + ' See log for more info');
     }
   }
 
@@ -80,6 +76,6 @@ export class NewEntryComponent implements OnInit {
   }
 
   setStatus(status) {
-    this.matSnackBar.open(status, null, { duration: 3000 });
+    this.matSnackBar.open(status, null, { duration: 5000 });
   }
 }

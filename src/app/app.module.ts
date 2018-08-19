@@ -14,14 +14,24 @@ import {
   MatSnackBarModule,
   MatSelectModule,
   MatOptionModule,
-  MatGridListModule
+  MatGridListModule,
+  MatDialogModule,
+  MatListModule,
+  MatDividerModule,
+  MatExpansionModule
 } from '@angular/material';
 import { NewEntryComponent } from './new-entry/new-entry.component';
 import { UtilModule } from './util/util.module';
 import { EntriesComponent } from './entries/entries.component';
+import { DetailsComponent } from './entries/details/details.component';
 
 @NgModule({
-  declarations: [AppComponent, NewEntryComponent, EntriesComponent],
+  declarations: [
+    AppComponent,
+    NewEntryComponent,
+    EntriesComponent,
+    DetailsComponent
+  ],
   imports: [
     BrowserAnimationsModule,
     CommonModule,
@@ -34,11 +44,16 @@ import { EntriesComponent } from './entries/entries.component';
     MatSnackBarModule,
     MatToolbarModule,
     MatGridListModule,
+    MatDialogModule,
+    MatListModule,
+    MatDividerModule,
+    MatExpansionModule,
     BrowserModule,
     FormsModule,
     HttpModule,
     UtilModule
   ],
+  entryComponents: [DetailsComponent],
   providers: [],
   bootstrap: [AppComponent]
 })

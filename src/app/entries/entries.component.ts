@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Web3Service } from '../util/web3.service';
-import { MatSnackBar } from '@angular/material';
+import { MatSnackBar, MatDialog } from '@angular/material';
+import { DetailsComponent } from './details/details.component';
 
 declare let require: any;
 const entryStorageArtifacts = require('../../../build/contracts/EntryStorage.json');
@@ -12,14 +13,14 @@ const entryStorageArtifacts = require('../../../build/contracts/EntryStorage.jso
 })
 export class EntriesComponent implements OnInit {
   EntryStorage: any;
-  entries = [];
+  entries: any;
   entryCount: number;
-  status = '';
   account: string;
 
   constructor(
     private web3Service: Web3Service,
-    private matSnackBar: MatSnackBar
+    private matSnackBar: MatSnackBar,
+    public dialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -28,13 +29,13 @@ export class EntriesComponent implements OnInit {
       .artifactsToContract(entryStorageArtifacts)
       .then(EntryStorageAbstraction => {
         this.EntryStorage = EntryStorageAbstraction;
-        this.getEntries();
       });
   }
 
   watchAccount() {
     this.web3Service.accountsObservable.subscribe(accounts => {
       this.account = accounts[0];
+      this.getEntries();
     });
   }
 
@@ -59,8 +60,13 @@ export class EntriesComponent implements OnInit {
     return state;
   }
 
+  getDate(unix_timestamp: number): Date {
+    return new Date(unix_timestamp * 1000);
+  }
+
   async getEntries() {
     console.log('Get entries...');
+    this.entries = [];
 
     try {
       const deployedEntryStorage = await this.EntryStorage.deployed();
@@ -74,18 +80,34 @@ export class EntriesComponent implements OnInit {
             entry[2].toString(),
             'ether'
           ),
-          unsafeCreatedTimestamp: entry[3].toNumber(),
+          unsafeCreatedTimestamp: this.getDate(entry[3].toNumber()),
           submissionCount: entry[4].toNumber(),
           state: this.getState(entry[5].toNumber())
         });
       }
+      this.entries.reverse();
     } catch (e) {
       console.log(e);
-      this.setStatus('Error getting the list of entries. See log.');
+      this.setStatus(e.message + ' See log for more info');
     }
   }
 
   setStatus(status) {
-    this.matSnackBar.open(status, null, { duration: 3000 });
+    this.matSnackBar.open(status, null, { duration: 5000 });
+  }
+
+  openDialog(entry): void {
+    const dialogRef = this.dialog.open(DetailsComponent, {
+      width: '800px',
+      data: {
+        entry: entry,
+        account: this.account
+      }
+    });
+
+    // dialogRef.afterClosed().subscribe(result => {
+    //  console.log('The dialog was closed');
+    //  this.animal = result;
+    // });
   }
 }

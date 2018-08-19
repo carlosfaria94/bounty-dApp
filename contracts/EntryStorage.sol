@@ -22,7 +22,7 @@ contract EntryStorage {
         uint id;
         address owner;
         // Multihash directoryHash;
-        uint created;
+        uint unsafeCreatedTimestamp;
     }
 
     struct Multihash {
@@ -64,6 +64,7 @@ contract EntryStorage {
     }
 
     function cancelEntry(uint _entryId) public {
+        // TODO: We can only cancel open entries
         entries[_entryId].state = uint(State.Canceled);
         entries[_entryId].owner.transfer(entries[_entryId].bounty);
     }
@@ -89,6 +90,17 @@ contract EntryStorage {
 
         e.state = uint(State.Submitted);
         e.submissions[e.submissionCount] = newSubmission;
+    }
+
+    function getSubmission(uint _entryId, uint _submissionId)
+        public view
+        returns (uint, address, uint) {
+        Entry storage e = entries[_entryId];
+        return (
+            e.submissions[_submissionId].id,
+            e.submissions[_submissionId].owner,
+            e.submissions[_submissionId].unsafeCreatedTimestamp
+        );
     }
 
     function acceptSubmission(uint _entryId, uint _submissionId) public {
