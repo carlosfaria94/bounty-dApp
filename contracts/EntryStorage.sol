@@ -8,7 +8,7 @@ contract EntryStorage {
         uint id;
         address owner;
         uint bounty;
-        // Multihash directoryHash;
+        Multihash specHash;
         uint unsafeCreatedTimestamp;
         uint submissionCount;
         mapping (uint => Submission) submissions;
@@ -22,7 +22,7 @@ contract EntryStorage {
     struct Submission {
         uint id;
         address owner;
-        // Multihash directoryHash;
+        Multihash specHash;
         uint unsafeCreatedTimestamp;
     }
 
@@ -78,19 +78,18 @@ contract EntryStorage {
     }
 
     function addEntry(
-        // bytes32 _directoryDigest,
-        // uint8 _directoryHashFunction,
-        // uint8 _directorySize
+        bytes32 _specDigest,
+        uint8 _specHashFunction,
+        uint8 _specSize
     ) public payable {
         entryCount = entryCount + 1;
 
-        // Multihash memory _directoryHash = Multihash(
-        //    _directoryDigest, _directoryHashFunction, _directorySize);
+        Multihash memory _specHash = Multihash(_specDigest, _specHashFunction, _specSize);
         Entry memory e;
         e.id = entryCount;
         e.owner = msg.sender;
         e.bounty = msg.value;
-        // e.directoryHash = _directoryHash;
+        e.specHash = _specHash;
         // This timestamp will not be used for critical contract logic, only as reference
         e.unsafeCreatedTimestamp = block.timestamp;
         e.submissionCount = 0;
@@ -102,9 +101,20 @@ contract EntryStorage {
     function getEntry(uint _entryId)
         public view 
         entryExist(_entryId)
-        returns (uint, address, uint, uint, uint, uint, bool) {
+        returns (uint, address, uint, bytes32, uint8, uint8, uint, uint, uint, bool) {
         Entry storage e = entries[_entryId];
-        return(e.id, e.owner, e.bounty, e.unsafeCreatedTimestamp, e.submissionCount, e.state, e.isBountyCollected);
+        return(
+            e.id,
+            e.owner, 
+            e.bounty, 
+            e.specHash.digest,
+            e.specHash.hashFunction,
+            e.specHash.size,
+            e.unsafeCreatedTimestamp, 
+            e.submissionCount, 
+            e.state, 
+            e.isBountyCollected
+        );
     }
 
     function cancelEntry(uint _entryId) 
@@ -117,23 +127,22 @@ contract EntryStorage {
     }
 
     function submit(
-        uint _entryId
-        // bytes32 _directoryDigest,
-        // uint8 _directoryHashFunction,
-        // uint8 _directorySize
+        uint _entryId,
+        bytes32 _specDigest,
+        uint8 _specHashFunction,
+        uint8 _specSize
     ) public entryExist(_entryId) {
         Entry storage e = entries[_entryId];
         // Its only possible to submit when an entry state is Open or Submitted
         require(e.state == uint(State.Open) || e.state == uint(State.Submitted));
         e.submissionCount = e.submissionCount + 1;
 
-        // Multihash memory _directoryHash = Multihash(
-        //    _directoryDigest, _directoryHashFunction, _directorySize);
+        Multihash memory _specHash = Multihash(_specDigest, _specHashFunction, _specSize);
 
         Submission memory newSubmission = Submission(
             e.submissionCount,
             msg.sender,
-            // _directoryHash,
+            _specHash,
             block.timestamp
         );
 
@@ -145,12 +154,15 @@ contract EntryStorage {
         public view
         entryExist(_entryId)
         submissionExist(_entryId, _submissionId)
-        returns (uint, address, uint) {
-        Entry storage e = entries[_entryId];
+        returns (uint, address, bytes32, uint8, uint8, uint) {
+        Submission storage submission = entries[_entryId].submissions[_submissionId];
         return (
-            e.submissions[_submissionId].id,
-            e.submissions[_submissionId].owner,
-            e.submissions[_submissionId].unsafeCreatedTimestamp
+            submission.id,
+            submission.owner,
+            submission.specHash.digest,
+            submission.specHash.hashFunction,
+            submission.specHash.size,
+            submission.unsafeCreatedTimestamp
         );
     }
 
