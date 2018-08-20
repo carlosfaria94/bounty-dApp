@@ -15,10 +15,13 @@ const entryStorageArtifacts = require('../../../build/contracts/EntryStorage.jso
 export class NewEntryComponent implements OnInit {
   account = '';
   EntryStorage: any;
-  entry = {
+  spec = {
+    description: '',
     bounty: 0,
-    specification: ''
+    additionalFile: ''
   };
+  creatingBounty = false;
+  fileToUpload: any;
 
   constructor(
     private web3Service: Web3Service,
@@ -43,54 +46,78 @@ export class NewEntryComponent implements OnInit {
   }
 
   async createBounty() {
+    this.creatingBounty = true;
     if (!this.EntryStorage) {
       this.setStatus(
         'EntryStorage contract is not loaded, unable to create a bounty'
       );
       return;
     }
-    if (!this.entry.bounty) {
+    if (!this.spec.bounty) {
       this.setStatus('Bounty is not set');
       return;
     }
-    if (this.entry.specification === '') {
+    if (this.spec.description === '') {
       this.setStatus('Specification is not set');
       return;
     }
 
     this.setStatus('Creating bounty, please wait');
-    const infoHash = await this.ipfsService.uploadObject(this.entry);
-    const entryMultiHash = this.multihashService.getBytes32FromMultiash(
-      infoHash
-    );
-    console.log('entryMultiHash', entryMultiHash);
 
     try {
+      if (this.fileToUpload) {
+        const additionalFile = await this.ipfsService.uploadFile(
+          this.fileToUpload
+        );
+        // Add the IPFS file hash on the entry specification
+        this.spec.additionalFile = additionalFile;
+      } else {
+        delete this.spec.additionalFile;
+      }
+      const specHash = await this.ipfsService.uploadObject(this.spec);
+      const specMultiHash = this.multihashService.getBytes32FromMultiash(
+        specHash
+      );
       const deployedEntryStorage = await this.EntryStorage.deployed();
-      const transaction = await deployedEntryStorage.addEntry.sendTransaction({
-        value: this.web3Service.web3.utils.toWei(this.entry.bounty, 'ether'),
-        from: this.account
-      });
+      const transaction = await deployedEntryStorage.addEntry.sendTransaction(
+        specMultiHash.digest,
+        specMultiHash.hashFunction,
+        specMultiHash.size,
+        {
+          value: this.web3Service.web3.utils.toWei(this.spec.bounty, 'ether'),
+          from: this.account
+        }
+      );
 
       if (!transaction) {
         this.setStatus('Transaction failed!');
       } else {
         this.setStatus('Transaction complete!');
       }
+      this.creatingBounty = false;
     } catch (e) {
       console.log(e);
       this.setStatus(e.message + ' See log for more info');
+      this.creatingBounty = false;
     }
   }
 
   setBounty(e) {
     console.log('Setting amount: ' + e.target.value);
-    this.entry.bounty = e.target.value;
+    this.spec.bounty = e.target.value;
   }
 
-  setSpecification(e) {
+  setDescription(e) {
     console.log('Setting spec: ' + e.target.value);
-    this.entry.specification = e.target.value;
+    this.spec.description = e.target.value;
+  }
+
+  handleFileInput(e) {
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      this.fileToUpload = reader.result;
+    };
+    reader.readAsArrayBuffer(e.files[0]);
   }
 
   setStatus(status) {

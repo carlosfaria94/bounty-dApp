@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { Web3Service } from '../util/web3.service';
 import { MatSnackBar, MatDialog } from '@angular/material';
 import { DetailsComponent } from './details/details.component';
+import { MultihashService } from '../util/multihash.service';
+import { IpfsService } from '../util/ipfs.service';
 
 declare let require: any;
 const entryStorageArtifacts = require('../../../build/contracts/EntryStorage.json');
@@ -20,7 +22,9 @@ export class EntriesComponent implements OnInit {
   constructor(
     private web3Service: Web3Service,
     private matSnackBar: MatSnackBar,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    private multihashService: MultihashService,
+    private ipfsService: IpfsService
   ) {}
 
   ngOnInit() {
@@ -73,6 +77,17 @@ export class EntriesComponent implements OnInit {
       const noEntries = await deployedEntryStorage.entryCount();
       for (let i = 1; i <= noEntries.toNumber(); i++) {
         const entry = await deployedEntryStorage.getEntry.call(i);
+        const specHash = this.multihashService.getMultihashFromBytes32(
+          entry[3],
+          entry[4].toNumber(),
+          entry[5].toNumber()
+        );
+        const spec = await this.ipfsService.getObject(specHash);
+        if (spec.additionalFile) {
+          spec.additionalFile = `https://ipfs.infura.io/ipfs/${
+            spec.additionalFile
+          }`;
+        }
         this.entries.push({
           id: entry[0].toNumber(),
           owner: entry[1],
@@ -80,10 +95,11 @@ export class EntriesComponent implements OnInit {
             entry[2].toString(),
             'ether'
           ),
-          unsafeCreatedTimestamp: this.getDate(entry[3].toNumber()),
-          submissionCount: entry[4].toNumber(),
-          state: this.getState(entry[5].toNumber()),
-          isBountyCollected: entry[6]
+          spec: spec,
+          unsafeCreatedTimestamp: this.getDate(entry[6].toNumber()),
+          submissionCount: entry[7].toNumber(),
+          state: this.getState(entry[8].toNumber()),
+          isBountyCollected: entry[9]
         });
       }
       this.entries.reverse();

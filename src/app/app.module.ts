@@ -18,7 +18,8 @@ import {
   MatDialogModule,
   MatListModule,
   MatDividerModule,
-  MatExpansionModule
+  MatExpansionModule,
+  MatProgressBarModule
 } from '@angular/material';
 import { NewEntryComponent } from './new-entry/new-entry.component';
 import { UtilModule } from './util/util.module';
@@ -48,6 +49,7 @@ import { DetailsComponent } from './entries/details/details.component';
     MatListModule,
     MatDividerModule,
     MatExpansionModule,
+    MatProgressBarModule,
     BrowserModule,
     FormsModule,
     HttpModule,
