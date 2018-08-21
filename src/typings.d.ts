@@ -5,6 +5,7 @@ interface NodeModule {
 }
 
 declare module 'ipfs-api';
+declare module 'uport-connect';
 
 declare module '*.json' {
   const value: any;

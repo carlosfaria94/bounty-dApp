@@ -3,6 +3,7 @@ import { Web3Service } from '../util/web3.service';
 import { MatSnackBar } from '@angular/material';
 import { IpfsService } from '../util/ipfs.service';
 import { MultihashService } from '../util/multihash.service';
+import { UPortService } from '../util/u-port.service';
 
 declare let require: any;
 const entryStorageArtifacts = require('../../../build/contracts/EntryStorage.json');
@@ -18,7 +19,9 @@ export class NewEntryComponent implements OnInit {
   spec = {
     description: '',
     bounty: 0,
-    additionalFile: ''
+    additionalFile: '',
+    uPortName: '',
+    uPortAvatar: ''
   };
   creatingBounty = false;
   fileToUpload: any;
@@ -27,7 +30,8 @@ export class NewEntryComponent implements OnInit {
     private web3Service: Web3Service,
     private matSnackBar: MatSnackBar,
     private ipfsService: IpfsService,
-    private multihashService: MultihashService
+    private multihashService: MultihashService,
+    private uPortService: UPortService
   ) {}
 
   ngOnInit(): void {
@@ -58,12 +62,12 @@ export class NewEntryComponent implements OnInit {
       return;
     }
     if (this.spec.description === '') {
-      this.setStatus('Specification is not set');
+      this.setStatus('Description is not set');
       return;
     }
-
     this.setStatus('Creating bounty, please wait');
-
+    // Lets set the uPort name and avatar to be saved in the entry Spec
+    this.setUportCredentials();
     try {
       if (this.fileToUpload) {
         const additionalFile = await this.ipfsService.uploadFile(
@@ -102,13 +106,26 @@ export class NewEntryComponent implements OnInit {
     }
   }
 
+  setUportCredentials() {
+    const credentials = this.uPortService.credentials;
+    if (!credentials) {
+      return;
+    }
+    if (credentials.avatar.uri) {
+      this.spec.uPortAvatar = credentials.avatar.uri;
+    }
+    if (credentials.name) {
+      this.spec.uPortName = credentials.name;
+    }
+  }
+
   setBounty(e) {
     console.log('Setting amount: ' + e.target.value);
     this.spec.bounty = e.target.value;
   }
 
   setDescription(e) {
-    console.log('Setting spec: ' + e.target.value);
+    console.log('Setting spec description: ' + e.target.value);
     this.spec.description = e.target.value;
   }
 

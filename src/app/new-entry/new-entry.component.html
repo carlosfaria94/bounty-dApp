@@ -16,9 +16,8 @@
       <input type="file" id="file" (change)="handleFileInput($event.target)">
     </div>
     <button [disabled]="creatingBounty" mat-raised-button color="primary" (click)="createBounty()">
-      Create bounty
+      CREATE
     </button>
     <mat-progress-bar *ngIf="creatingBounty" mode="indeterminate"></mat-progress-bar>
-
   </mat-card-content>
 </mat-card>

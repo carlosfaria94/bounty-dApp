@@ -181,11 +181,15 @@ contract EntryStorage {
         public view
         entryExist(_entryId)
         submissionExist(_entryId, entries[_entryId].acceptedSubmission.id)
-        returns (uint, address, uint) {
+        returns (uint, address, bytes32, uint8, uint8, uint) {
+        Submission storage acceptedSubmission = entries[_entryId].acceptedSubmission;
         return (
-            entries[_entryId].acceptedSubmission.id,
-            entries[_entryId].acceptedSubmission.owner,
-            entries[_entryId].acceptedSubmission.unsafeCreatedTimestamp
+            acceptedSubmission.id,
+            acceptedSubmission.owner,
+            acceptedSubmission.specHash.digest,
+            acceptedSubmission.specHash.hashFunction,
+            acceptedSubmission.specHash.size,
+            acceptedSubmission.unsafeCreatedTimestamp
         );
     }
 

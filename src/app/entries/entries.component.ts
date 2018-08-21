@@ -121,10 +121,5 @@ export class EntriesComponent implements OnInit {
         account: this.account
       }
     });
-
-    // dialogRef.afterClosed().subscribe(result => {
-    //  console.log('The dialog was closed');
-    //  this.animal = result;
-    // });
   }
 }

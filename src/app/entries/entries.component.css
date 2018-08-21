@@ -11,6 +11,10 @@
   background-size: cover;
 }
 
+.cover {
+  background-size: cover;
+}
+
 .mat-card-actions {
   display: flex;
   flex-direction: column;
