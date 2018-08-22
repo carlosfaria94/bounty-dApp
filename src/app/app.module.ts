@@ -25,13 +25,15 @@ import { NewEntryComponent } from './new-entry/new-entry.component';
 import { UtilModule } from './util/util.module';
 import { EntriesComponent } from './entries/entries.component';
 import { DetailsComponent } from './entries/details/details.component';
+import { OracleComponent } from './oracle/oracle.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     NewEntryComponent,
     EntriesComponent,
-    DetailsComponent
+    DetailsComponent,
+    OracleComponent
   ],
   imports: [
     BrowserAnimationsModule,
