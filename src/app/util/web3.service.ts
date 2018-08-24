@@ -11,7 +11,6 @@ export class Web3Service {
   public web3: any;
   private accounts: string[];
   public ready = false;
-  public MetaCoin: any;
   public accountsObservable = new Subject<string[]>();
 
   constructor() {
