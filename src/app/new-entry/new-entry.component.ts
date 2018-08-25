@@ -5,9 +5,6 @@ import { IpfsService } from '../util/ipfs.service';
 import { MultihashService } from '../util/multihash.service';
 import { UPortService } from '../util/u-port.service';
 
-declare let require: any;
-const entryStorageArtifacts = require('../../../build/contracts/EntryStorage.json');
-
 @Component({
   selector: 'app-new-entry',
   templateUrl: './new-entry.component.html',
@@ -15,7 +12,7 @@ const entryStorageArtifacts = require('../../../build/contracts/EntryStorage.jso
 })
 export class NewEntryComponent implements OnInit {
   account = '';
-  EntryStorage: any;
+  organisation: any;
   spec = {
     description: '',
     bounty: 0,
@@ -37,9 +34,9 @@ export class NewEntryComponent implements OnInit {
   ngOnInit(): void {
     this.watchAccount();
     this.web3Service
-      .artifactsToContract(entryStorageArtifacts)
-      .then(EntryStorageAbstraction => {
-        this.EntryStorage = EntryStorageAbstraction;
+      .artifactsToContract(this.web3Service.organisationArtifacts)
+      .then(organisationAbstraction => {
+        this.organisation = organisationAbstraction;
       });
   }
 
@@ -51,9 +48,9 @@ export class NewEntryComponent implements OnInit {
 
   async createBounty() {
     this.creatingBounty = true;
-    if (!this.EntryStorage) {
+    if (!this.organisation) {
       this.setStatus(
-        'EntryStorage contract is not loaded, unable to create a bounty'
+        'organisation contract is not loaded, unable to create a bounty'
       );
       return;
     }
@@ -82,8 +79,8 @@ export class NewEntryComponent implements OnInit {
       const specMultiHash = this.multihashService.getBytes32FromMultiash(
         specHash
       );
-      const deployedEntryStorage = await this.EntryStorage.deployed();
-      const transaction = await deployedEntryStorage.addEntry.sendTransaction(
+      const deployedOrganisation = await this.organisation.deployed();
+      const transaction = await deployedOrganisation.addEntry.sendTransaction(
         specMultiHash.digest,
         specMultiHash.hashFunction,
         specMultiHash.size,

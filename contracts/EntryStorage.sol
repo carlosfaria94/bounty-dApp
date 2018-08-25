@@ -1,8 +1,18 @@
 pragma solidity ^0.4.23;
 
-contract EntryStorage {
-    mapping (uint => Entry) public entries;
-    uint public entryCount;
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import { Destructible } from "openzeppelin-solidity/contracts/lifecycle/Destructible.sol";
+import { Ownable } from "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+
+contract EntryStorage is Ownable, Destructible {
+    // It prevents overflow issues
+    using SafeMath for uint256;
+    // It maps the IDs to entries
+    mapping (uint256 => Entry) public entries;
+    // Number of entries
+    uint256 entryCount;
+    // Circuit breaker
+    bool stopped;
 
     struct Entry {
         uint id;
@@ -16,7 +26,7 @@ contract EntryStorage {
         uint state;
         bool isBountyCollected;
     }
-    
+     
     enum State { Open, Submitted, Done, Canceled }
 
     struct Submission {
@@ -73,21 +83,44 @@ contract EntryStorage {
         _;
     }
 
-    constructor() public {
-        entryCount = 0;
+    // Stops the execution if stopped is true
+    modifier stop_if_emergency() {
+        require(!stopped);
+        _;
     }
 
+    // Contract constructur which set the circuit breaker to false and entryCount to 0
+    constructor() public {
+        entryCount = 0;
+        stopped = false;
+    }
+
+    /**
+    * @notice Toggles circuit breaker
+    */
+    function toggle_active() public onlyOwner() {
+        stopped = !stopped;
+    }
+
+    /**
+    * @notice Adds an entry on the entries persistent storage
+    * @param _owner address Entry owner
+    * @param _specDigest bytes32 IPFS digest of the entry specification
+    * @param _specHashFunction uint8 IPFS hash function of the entry specification
+    * @param _specSize uint8 IPFS size of the entry specification
+    */
     function addEntry(
+        address _owner,
         bytes32 _specDigest,
         uint8 _specHashFunction,
         uint8 _specSize
-    ) public payable {
-        entryCount = entryCount + 1;
+    ) public payable stop_if_emergency() returns (uint256) {
+        entryCount = entryCount.add(1);
 
         Multihash memory _specHash = Multihash(_specDigest, _specHashFunction, _specSize);
         Entry memory e;
         e.id = entryCount;
-        e.owner = msg.sender;
+        e.owner = _owner;
         e.bounty = msg.value;
         e.specHash = _specHash;
         // This timestamp will not be used for critical contract logic, only as reference
@@ -96,8 +129,24 @@ contract EntryStorage {
         e.state = uint(State.Open);
         e.isBountyCollected = false;
         entries[entryCount] = e;
+       
+        return entryCount;
     }
 
+    /**
+    * @notice Gets the entry from the EntryStorage contract
+    * @param _entryId uint256 The entry ID
+    * @return uint Entry id
+    * @return address Entry owner
+    * @return uint Entry bounty
+    * @return bytes32 IPFS digest of the entry specification
+    * @return uint8 IPFS hash function of the entry specification
+    * @return uint8 IPFS size of the entry specification
+    * @return uint Entry created timestamp
+    * @return uint Entry number of submissions
+    * @return uint Entry state
+    * @return bool Is bounty has been collected
+    */
     function getEntry(uint _entryId)
         public view 
         entryExist(_entryId)
@@ -117,21 +166,42 @@ contract EntryStorage {
         );
     }
 
-    function cancelEntry(uint _entryId) 
+    /** 
+    * @notice Get entry count
+    */
+    function getEntryCount() public view returns (uint256) {
+        return entryCount;
+    }
+
+    /** 
+    * @notice Cancel the entry
+    * @param _entryId uint256 The entry ID
+    * @param _sender address Sender of the transaction. Should be the address of the entry owner
+    */
+    function cancelEntry(uint256 _entryId, address _sender) 
         public 
         entryExist(_entryId)
-        isEntryOwner(_entryId, msg.sender)
+        isEntryOwner(_entryId, _sender)
         isOpen(_entryId) {
         entries[_entryId].state = uint(State.Canceled);
         entries[_entryId].owner.transfer(entries[_entryId].bounty);
     }
 
+    /** 
+    * @notice Submits to a new entry
+    * @param _entryId uint256 The entry ID
+    * @param _owner address The submission owner
+    * @param _specDigest bytes32 IPFS digest of the submission specification
+    * @param _specHashFunction uint8 IPFS hash function of the submission specification
+    * @param _specSize uint8 IPFS size of the submission specification
+    */
     function submit(
         uint _entryId,
+        address _owner,
         bytes32 _specDigest,
         uint8 _specHashFunction,
         uint8 _specSize
-    ) public entryExist(_entryId) {
+    ) public stop_if_emergency() entryExist(_entryId) {
         Entry storage e = entries[_entryId];
         // Its only possible to submit when an entry state is Open or Submitted
         require(e.state == uint(State.Open) || e.state == uint(State.Submitted));
@@ -141,7 +211,7 @@ contract EntryStorage {
 
         Submission memory newSubmission = Submission(
             e.submissionCount,
-            msg.sender,
+            _owner,
             _specHash,
             block.timestamp
         );
@@ -150,6 +220,17 @@ contract EntryStorage {
         e.submissions[e.submissionCount] = newSubmission;
     }
 
+    /**
+    * @notice Gets the submission from the EntryStorage contract
+    * @param _entryId uint256 The entry ID
+    * @param _submissionId uint256 The submission ID
+    * @return uint Submission id
+    * @return address Submission owner
+    * @return bytes32 IPFS digest of the submission specification
+    * @return uint8 IPFS hash function of the submission specification
+    * @return uint8 IPFS size of the submission specification
+    * @return uint Submission created timestamp
+    */
     function getSubmission(uint _entryId, uint _submissionId)
         public view
         entryExist(_entryId)
@@ -166,17 +247,34 @@ contract EntryStorage {
         );
     }
 
-    function acceptSubmission(uint _entryId, uint _submissionId)
+    /** 
+    * @notice Accepts the submission
+    * @param _entryId uint256 The entry ID
+    * @param _submissionId uint256 The submission ID
+    * @param _sender address Sender of the transaction. Should be the address of the entry owner
+    */
+    function acceptSubmission(uint256 _entryId, uint256 _submissionId, address _sender)
         public
+        stop_if_emergency()
         entryExist(_entryId)
         submissionExist(_entryId, _submissionId)
-        isEntryOwner(_entryId, msg.sender)
+        isEntryOwner(_entryId, _sender)
         isSubmitted(_entryId) {
         Entry storage e = entries[_entryId];
         e.state = uint(State.Done);
         e.acceptedSubmission = e.submissions[_submissionId];
     }
 
+    /** 
+    * @notice Get entry accepted submission
+    * @param _entryId uint256 The entry ID
+    * @return uint Submission id
+    * @return address Submission owner
+    * @return bytes32 IPFS digest of the submission specification
+    * @return uint8 IPFS hash function of the submission specification
+    * @return uint8 IPFS size of the submission specification
+    * @return uint Submission created timestamp
+    */
     function getAcceptedSubmission(uint _entryId)
         public view
         entryExist(_entryId)
@@ -193,8 +291,14 @@ contract EntryStorage {
         );
     }
 
-    function claimBounty(uint _entryId) 
+    /** 
+    * @notice Claims the bounty for a given @param _entryId
+    * @param _entryId uint256 The entry ID
+    * @param _sender address Sender of the transaction. Should be the address of the entry owner
+    */
+    function claimBounty(uint _entryId, address _sender) 
         public 
+        stop_if_emergency()
         entryExist(_entryId)
         submissionExist(_entryId, entries[_entryId].acceptedSubmission.id)
         isDone(_entryId) {
@@ -202,9 +306,17 @@ contract EntryStorage {
         // Check if bounty has not been collected
         require(e.isBountyCollected == false, "Bounty has already been collected");
         address _acceptedOwner = e.acceptedSubmission.owner;
-        require(_acceptedOwner == msg.sender);
+        require(_acceptedOwner == _sender);
         e.isBountyCollected = true;
         _acceptedOwner.transfer(e.bounty);
     }
 
+    /** 
+    * @notice Kills this contract and sends remaining ETH to @param transferAddress_
+    * @param transferAddress_ address remaining ETH will be sent to
+    */
+    function kill(address transferAddress_) public
+    {
+        destroyAndSend(transferAddress_);
+    }
 }

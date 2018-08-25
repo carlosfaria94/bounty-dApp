@@ -2,9 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { Web3Service } from '../util/web3.service';
 import { MatSnackBar, MatDialog } from '@angular/material';
 
-declare let require: any;
-const oracleArtifacts = require('../../../build/contracts/EthPriceOracle.json');
-
 @Component({
   selector: 'app-oracle',
   templateUrl: './oracle.component.html',
@@ -35,7 +32,7 @@ export class OracleComponent implements OnInit {
   async setContract() {
     try {
       const contract = await this.web3Service.artifactsToContract(
-        oracleArtifacts
+        this.web3Service.oracleArtifacts
       );
       this.ethPriceOracle = await contract.deployed();
     } catch (e) {

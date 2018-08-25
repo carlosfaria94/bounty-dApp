@@ -5,16 +5,13 @@ import { DetailsComponent } from './details/details.component';
 import { MultihashService } from '../util/multihash.service';
 import { IpfsService } from '../util/ipfs.service';
 
-declare let require: any;
-const entryStorageArtifacts = require('../../../build/contracts/EntryStorage.json');
-
 @Component({
   selector: 'app-entries',
   templateUrl: './entries.component.html',
   styleUrls: ['./entries.component.css']
 })
 export class EntriesComponent implements OnInit {
-  EntryStorage: any;
+  organisation: any;
   entries: any;
   entryCount: number;
   account: string;
@@ -29,11 +26,7 @@ export class EntriesComponent implements OnInit {
 
   ngOnInit() {
     this.watchAccount();
-    this.web3Service
-      .artifactsToContract(entryStorageArtifacts)
-      .then(EntryStorageAbstraction => {
-        this.EntryStorage = EntryStorageAbstraction;
-      });
+    this.setContract();
   }
 
   watchAccount() {
@@ -41,6 +34,18 @@ export class EntriesComponent implements OnInit {
       this.account = accounts[0];
       this.getEntries();
     });
+  }
+
+  async setContract() {
+    try {
+      const contract = await this.web3Service.artifactsToContract(
+        this.web3Service.organisationArtifacts
+      );
+      this.organisation = await contract.deployed();
+    } catch (e) {
+      console.log(e);
+      this.setStatus(e.message + ' See log for more info');
+    }
   }
 
   getState(stateId: number): string {
@@ -73,10 +78,10 @@ export class EntriesComponent implements OnInit {
     this.entries = [];
 
     try {
-      const deployedEntryStorage = await this.EntryStorage.deployed();
-      const noEntries = await deployedEntryStorage.entryCount();
+      const noEntries = await this.organisation.getEntryCount();
+      console.log(`We have ${noEntries} entries`);
       for (let i = 1; i <= noEntries.toNumber(); i++) {
-        const entry = await deployedEntryStorage.getEntry.call(i);
+        const entry = await this.organisation.getEntry.call(i);
         const specHash = this.multihashService.getMultihashFromBytes32(
           entry[3],
           entry[4].toNumber(),

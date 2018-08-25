@@ -6,9 +6,6 @@ import { IpfsService } from '../../util/ipfs.service';
 import { MultihashService } from '../../util/multihash.service';
 import { UPortService } from '../../util/u-port.service';
 
-declare let require: any;
-const entryStorageArtifacts = require('../../../../build/contracts/EntryStorage.json');
-
 export interface DialogData {
   entry: any;
   account: string;
@@ -22,7 +19,7 @@ export interface DialogData {
 export class DetailsComponent implements OnInit {
   entry: any;
   account: string;
-  EntryStorage: any;
+  organisation: any;
   submissions: any;
   submitting = false;
   fileToUpload: any;
@@ -52,9 +49,9 @@ export class DetailsComponent implements OnInit {
 
   ngOnInit() {
     this.web3Service
-      .artifactsToContract(entryStorageArtifacts)
-      .then(EntryStorageAbstraction => {
-        this.EntryStorage = EntryStorageAbstraction;
+      .artifactsToContract(this.web3Service.organisationArtifacts)
+      .then(organisationAbstraction => {
+        this.organisation = organisationAbstraction;
         if (this.entry.submissionCount > 0) {
           this.getSubmissions();
         }
@@ -68,11 +65,11 @@ export class DetailsComponent implements OnInit {
     console.log('Geting submissions...');
     this.submissions = [];
     try {
-      const deployedEntryStorage = await this.EntryStorage.deployed();
+      const deployedOrganisation = await this.organisation.deployed();
       const entryId = this.entry.id;
       const noSubmissions = this.entry.submissionCount;
       for (let i = 1; i <= noSubmissions; i++) {
-        const entry = await deployedEntryStorage.getSubmission.call(entryId, i);
+        const entry = await deployedOrganisation.getSubmission.call(entryId, i);
         const specHash = this.multihashService.getMultihashFromBytes32(
           entry[2],
           entry[3].toNumber(),
@@ -101,9 +98,9 @@ export class DetailsComponent implements OnInit {
   async getAcceptedSubmission() {
     console.log('Geting accepted submission...');
     try {
-      const deployedEntryStorage = await this.EntryStorage.deployed();
+      const deployedOrganisation = await this.organisation.deployed();
       const entryId = this.entry.id;
-      const acceptedSubmission = await deployedEntryStorage.getAcceptedSubmission.call(
+      const acceptedSubmission = await deployedOrganisation.getAcceptedSubmission.call(
         entryId
       );
       const specHash = this.multihashService.getMultihashFromBytes32(
@@ -133,8 +130,8 @@ export class DetailsComponent implements OnInit {
     this.setStatus('Accepting submission, please wait');
 
     try {
-      const deployedEntryStorage = await this.EntryStorage.deployed();
-      const transaction = await deployedEntryStorage.acceptSubmission.sendTransaction(
+      const deployedOrganisation = await this.organisation.deployed();
+      const transaction = await deployedOrganisation.acceptSubmission.sendTransaction(
         this.entry.id,
         submission.id,
         { from: this.account }
@@ -153,9 +150,9 @@ export class DetailsComponent implements OnInit {
 
   async submit() {
     this.submitting = true;
-    if (!this.EntryStorage) {
+    if (!this.organisation) {
       this.setStatus(
-        'EntryStorage contract is not loaded, unable to submit work'
+        'Organisation contract is not loaded, unable to submit work'
       );
       return;
     }
@@ -179,8 +176,8 @@ export class DetailsComponent implements OnInit {
       const specMultiHash = this.multihashService.getBytes32FromMultiash(
         specHash
       );
-      const deployedEntryStorage = await this.EntryStorage.deployed();
-      const transaction = await deployedEntryStorage.submit.sendTransaction(
+      const deployedOrganisation = await this.organisation.deployed();
+      const transaction = await deployedOrganisation.submit.sendTransaction(
         this.entry.id,
         specMultiHash.digest,
         specMultiHash.hashFunction,
@@ -202,16 +199,16 @@ export class DetailsComponent implements OnInit {
   }
 
   async claimBounty() {
-    if (!this.EntryStorage) {
+    if (!this.organisation) {
       this.setStatus(
-        'EntryStorage contract is not loaded, unable to claim the bounty'
+        'Organisation contract is not loaded, unable to claim the bounty'
       );
       return;
     }
     this.setStatus('Claiming the bounty, please wait');
     try {
-      const deployedEntryStorage = await this.EntryStorage.deployed();
-      const transaction = await deployedEntryStorage.claimBounty.sendTransaction(
+      const deployedOrganisation = await this.organisation.deployed();
+      const transaction = await deployedOrganisation.claimBounty.sendTransaction(
         this.entry.id,
         { from: this.account }
       );
@@ -228,16 +225,16 @@ export class DetailsComponent implements OnInit {
   }
 
   async cancelEntry() {
-    if (!this.EntryStorage) {
+    if (!this.organisation) {
       this.setStatus(
-        'EntryStorage contract is not loaded, unable to cancel a entry'
+        'OrganisationStorage contract is not loaded, unable to cancel a entry'
       );
       return;
     }
     this.setStatus('Canceling entry, please wait');
     try {
-      const deployedEntryStorage = await this.EntryStorage.deployed();
-      const transaction = await deployedEntryStorage.cancelEntry.sendTransaction(
+      const deployedOrganisation = await this.organisation.deployed();
+      const transaction = await deployedOrganisation.cancelEntry.sendTransaction(
         this.entry.id,
         { from: this.account }
       );
