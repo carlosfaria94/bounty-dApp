@@ -260,6 +260,17 @@ export class DetailsComponent implements OnInit {
     }
   }
 
+  isOwner() {
+    return this.account.toUpperCase() === this.entry.owner.toUpperCase();
+  }
+
+  isBountyOwner() {
+    return (
+      this.account.toUpperCase() ===
+      this.entry.acceptedSubmission.owner.toUpperCase()
+    );
+  }
+
   getDate(unix_timestamp: number): Date {
     return new Date(unix_timestamp * 1000);
   }

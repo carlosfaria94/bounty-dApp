@@ -93,7 +93,7 @@
         </mat-list>
 
         <br>
-        <button *ngIf="entry.state !== 'Done'" mat-raised-button color="primary" (click)="accept(submission)">
+        <button *ngIf="entry.state !== 'Done' && isOwner()" mat-raised-button color="primary" (click)="accept(submission)">
           ACCEPT
         </button>
       </mat-expansion-panel>
@@ -110,7 +110,7 @@
     <h4 mat-dialog-title>Not accepting more submissions. The bounty it's finished.</h4>
   </div>
 
-  <div *ngIf="entry.state === 'Open' || entry.state === 'Submitted'" class="new-submission">
+  <div *ngIf="(entry.state === 'Open' || entry.state === 'Submitted') && !isOwner()" class="new-submission">
     <h4 mat-dialog-title>Submit your work</h4>
     <mat-form-field>
       <textarea matInput placeholder="Description" rows="10" (change)="setDescription($event)"></textarea>
@@ -128,10 +128,10 @@
 </mat-dialog-content>
 
 <mat-dialog-actions>
-  <button *ngIf="entry.state === 'Open'" mat-raised-button color="warn" (click)="cancelEntry()">
+  <button *ngIf="entry.state === 'Open' && isOwner()" mat-raised-button color="warn" (click)="cancelEntry()">
     CANCEL BOUNTY
   </button>
-  <button *ngIf="!entry.isBountyCollected && entry.state === 'Done'" mat-raised-button color="primary" (click)="claimBounty()">
+  <button *ngIf="!entry.isBountyCollected && entry.state === 'Done' && isBountyOwner()" mat-raised-button color="primary" (click)="claimBounty()">
     CLAIM YOUR {{ entry.bounty }} ETH BOUNTY
   </button>
 </mat-dialog-actions>
