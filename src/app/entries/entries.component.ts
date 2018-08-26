@@ -32,7 +32,6 @@ export class EntriesComponent implements OnInit {
   watchAccount() {
     this.web3Service.accountsObservable.subscribe(accounts => {
       this.account = accounts[0];
-      this.getEntries();
     });
   }
 
@@ -42,10 +41,25 @@ export class EntriesComponent implements OnInit {
         this.web3Service.organisationArtifacts
       );
       this.organisation = await contract.deployed();
+      this.watchNewEntries();
     } catch (e) {
       console.log(e);
       this.setStatus(e.message + ' See log for more info');
     }
+  }
+
+  watchNewEntries() {
+    const entryAddedEvent = this.organisation.EntryAdded({
+      _from: this.web3Service.web3.eth.coinbase
+    });
+    entryAddedEvent.watch((e, result) => {
+      if (e) {
+        console.log(e);
+        this.setStatus(e.message + ' See log for more info');
+      }
+      console.log(`New Entry with ID: ${result.args.id.toNumber()}`);
+      this.getEntries();
+    });
   }
 
   getState(stateId: number): string {
