@@ -48,28 +48,35 @@ export class DetailsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.web3Service
-      .artifactsToContract(this.web3Service.organisationArtifacts)
-      .then(organisationAbstraction => {
-        this.organisation = organisationAbstraction;
-        if (this.entry.submissionCount > 0) {
-          this.getSubmissions();
-        }
-        if (this.entry.state === 'Done') {
-          this.getAcceptedSubmission();
-        }
-      });
+    this.setContract();
+  }
+
+  async setContract() {
+    try {
+      const contract = await this.web3Service.artifactsToContract(
+        this.web3Service.organisationArtifacts
+      );
+      this.organisation = await contract.deployed();
+      if (this.entry.submissionCount > 0) {
+        this.getSubmissions();
+      }
+      if (this.entry.state === 'Done') {
+        this.getAcceptedSubmission();
+      }
+    } catch (e) {
+      console.log(e);
+      this.setStatus(e.message + ' See log for more info');
+    }
   }
 
   async getSubmissions() {
     console.log('Geting submissions...');
     this.submissions = [];
     try {
-      const deployedOrganisation = await this.organisation.deployed();
       const entryId = this.entry.id;
       const noSubmissions = this.entry.submissionCount;
       for (let i = 1; i <= noSubmissions; i++) {
-        const entry = await deployedOrganisation.getSubmission.call(entryId, i);
+        const entry = await this.organisation.getSubmission.call(entryId, i);
         const specHash = this.multihashService.getMultihashFromBytes32(
           entry[2],
           entry[3].toNumber(),
@@ -98,9 +105,8 @@ export class DetailsComponent implements OnInit {
   async getAcceptedSubmission() {
     console.log('Geting accepted submission...');
     try {
-      const deployedOrganisation = await this.organisation.deployed();
       const entryId = this.entry.id;
-      const acceptedSubmission = await deployedOrganisation.getAcceptedSubmission.call(
+      const acceptedSubmission = await this.organisation.getAcceptedSubmission.call(
         entryId
       );
       const specHash = this.multihashService.getMultihashFromBytes32(
@@ -130,8 +136,7 @@ export class DetailsComponent implements OnInit {
     this.setStatus('Accepting submission, please wait');
 
     try {
-      const deployedOrganisation = await this.organisation.deployed();
-      const transaction = await deployedOrganisation.acceptSubmission.sendTransaction(
+      const transaction = await this.organisation.acceptSubmission.sendTransaction(
         this.entry.id,
         submission.id,
         { from: this.account }
@@ -142,9 +147,11 @@ export class DetailsComponent implements OnInit {
       } else {
         this.setStatus('Transaction complete!');
       }
+      this.onNoClick();
     } catch (e) {
       console.log(e);
       this.setStatus(e.message + ' See log for more info');
+      this.onNoClick();
     }
   }
 
@@ -176,8 +183,7 @@ export class DetailsComponent implements OnInit {
       const specMultiHash = this.multihashService.getBytes32FromMultiash(
         specHash
       );
-      const deployedOrganisation = await this.organisation.deployed();
-      const transaction = await deployedOrganisation.submit.sendTransaction(
+      const transaction = await this.organisation.submit.sendTransaction(
         this.entry.id,
         specMultiHash.digest,
         specMultiHash.hashFunction,
@@ -191,10 +197,12 @@ export class DetailsComponent implements OnInit {
         this.setStatus('Transaction complete!');
       }
       this.submitting = false;
+      this.onNoClick();
     } catch (e) {
       console.log(e);
       this.setStatus(e.message + ' See log for more info');
       this.submitting = false;
+      this.onNoClick();
     }
   }
 
@@ -207,8 +215,7 @@ export class DetailsComponent implements OnInit {
     }
     this.setStatus('Claiming the bounty, please wait');
     try {
-      const deployedOrganisation = await this.organisation.deployed();
-      const transaction = await deployedOrganisation.claimBounty.sendTransaction(
+      const transaction = await this.organisation.claimBounty.sendTransaction(
         this.entry.id,
         { from: this.account }
       );
@@ -218,9 +225,11 @@ export class DetailsComponent implements OnInit {
       } else {
         this.setStatus('Transaction complete!');
       }
+      this.onNoClick();
     } catch (e) {
       console.log(e);
       this.setStatus(e.message + ' See log for more info');
+      this.onNoClick();
     }
   }
 
@@ -233,8 +242,7 @@ export class DetailsComponent implements OnInit {
     }
     this.setStatus('Canceling entry, please wait');
     try {
-      const deployedOrganisation = await this.organisation.deployed();
-      const transaction = await deployedOrganisation.cancelEntry.sendTransaction(
+      const transaction = await this.organisation.cancelEntry.sendTransaction(
         this.entry.id,
         { from: this.account }
       );
@@ -244,9 +252,11 @@ export class DetailsComponent implements OnInit {
       } else {
         this.setStatus('Transaction complete!');
       }
+      this.onNoClick();
     } catch (e) {
       console.log(e);
       this.setStatus(e.message + ' See log for more info');
+      this.onNoClick();
     }
   }
 

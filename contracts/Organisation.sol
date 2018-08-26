@@ -15,15 +15,17 @@ contract Organisation is Destructible {
 
     // Address of external storage contract
     address public entryStorageAddr;
-
+ 
     // Emitted when new Entry addedd
-    event EntryAdded(uint256 indexed id);
+    event EntryAdded(uint256 indexed entryId);
     // Emitted when exist a new submission
     event Submitted(uint256 indexed entryId);
     // Emitted when an Entry submission is accepted
-    event SubmissionAccepted(uint256 indexed submissionId);
+    event SubmissionAccepted(uint256 indexed entryId);
     // Emitted when an Entry is cancelled
     event EntryCancelled(uint256 indexed entryId);
+    // Emitted when bounty is claimed
+    event BountyClaimed(uint256 indexed entryId);
 
     /**
     * @notice Sets the address of the EntryStorage contract
@@ -128,7 +130,7 @@ contract Organisation is Destructible {
     function acceptSubmission(uint256 _entryId, uint256 _submissionId) public {
         EntryStorage entryStorage = EntryStorage(entryStorageAddr);
         entryStorage.acceptSubmission(_entryId, _submissionId, msg.sender);
-        emit SubmissionAccepted(_submissionId);
+        emit SubmissionAccepted(_entryId);
     }
 
     /** 
@@ -155,6 +157,7 @@ contract Organisation is Destructible {
     function claimBounty(uint256 _entryId) public {
         EntryStorage entryStorage = EntryStorage(entryStorageAddr);
         entryStorage.claimBounty(_entryId, msg.sender);
+        emit BountyClaimed(_entryId);
     }
 
     /** 
