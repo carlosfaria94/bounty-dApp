@@ -205,7 +205,7 @@ contract EntryStorage is Ownable, Destructible {
         Entry storage e = entries[_entryId];
         // Its only possible to submit when an entry state is Open or Submitted
         require(e.state == uint(State.Open) || e.state == uint(State.Submitted));
-        e.submissionCount = e.submissionCount + 1;
+        e.submissionCount = e.submissionCount.add(1);
 
         Multihash memory _specHash = Multihash(_specDigest, _specHashFunction, _specSize);
 
