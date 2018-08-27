@@ -1,5 +1,11 @@
 # bounty dApp
 
+With this bounty dApp anyone can create a new entry with an associated description, additional file and a bounty in Ethereum to be given.
+
+Anyone can submit their work to the existing entries. The owner of the entry can cancel it at any time. He also can accept the existing works submitted.
+
+The owner of the accepted work can claim the bounty at any time.
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org) 8.11.x
