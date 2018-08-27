@@ -1,89 +1,48 @@
-# Truffle Box for Angular
-
-This Truffle Box provides a base for working with the Truffle Framework and Angular.
-It provides a basic working example of the MetaCoin contracts with Angular components.
-This project is generated with [Angular CLI](https://cli.angular.io/).
+# bounty dApp
 
 ## Prerequisites
 
-In order to run the Truffle box, you will need [Node.js](https://nodejs.org) (tested with version 8.9.x). This will include `npm`, needed
-to install dependencies. In order install these dependencies, you will also need [Python](https://www.python.org) (version 2.7.x) and
-[git](https://git-scm.com/downloads). You will also need the [MetaMask](https://metamask.io/) plugin for Chrome.
+- [Node.js](https://nodejs.org) 8.11.x
+- [NPM](https://npm.org) 5.6.x
+- [MetaMask](https://metamask.io/) 4.9.x
+- [Python](https://www.python.org) 2.7.x
+- [ganache-cli](https://github.com/trufflesuite/ganache-cli) 6.1.x `npm install -g ganache-cli`
+- [Truffle](https://truffleframework.com/) 4.1.x `npm install -g truffle`
 
-## Building
+## Building & Running
 
-1. Install truffle, Angular CLI and an Ethereum client. If you don't have a test environment, we recommend ganache-cli
-  ```bash
-  npm install -g truffle
-  npm install -g @angular/cli
-  npm install -g ganache-cli
-  ```
+1. Go to the project directory and then:
 
-2. Download the box.
-  ```bash
-  truffle unbox Quintor/angular-truffle-box
-  ```
+```bash
+npm install
+```
 
-3. Run your Ethereum client. For Ganache CLI:
-  ```bash
-  ganache-cli
-  ```
-Note the mnemonic 12-word phrase printed on startup, you will need it later.
+1. a. Make sure you are running a private Ethereum network with Ganache CLI on `127.0.0.1:8545`:
 
-4. Compile and migrate your contracts.
-  ```bash
-  truffle compile && truffle migrate
-  ```
+```bash
+ganache-cli
+```
 
-## Configuration
-1. In order to connect with the Ethereum network, you will need to configure MetaMask
-2. Log into the `ganache-cli` test accounts in MetaMask, using the 12-word phrase printed earlier.
-    1. A detailed explaination of how to do this can be found [here](http://truffleframework.com/docs/advanced/truffle-with-metamask#using-the-browser-extension)
-        1. Normally, the available test accounts will change whenever you restart `ganache-cli`.
-        2. In order to receive the same test accounts every time you start `ganache-cli`, start it with a seed like this: `ganache-cli --seed 0` or `ganache-cli -m "put your mnemonic phrase here needs twelve words to work with MetaMask"`
-3. Point MetaMask to `ganache-cli` by connecting to the network `localhost:8545` 
+Note a list of private keys printed on startup, you will need it later.
 
+2. Compile and migrate project contracts
 
-## Running
+```bash
+truffle compile && truffle migrate
+```
 
-1. Run the app using Angular CLI:
-  ```bash
-  npm start
-  ```
-The app is now served on localhost:4200
+3. In your browser login in Metamask to Localhost 8545 and import accounts from the ganache-cli (using the private keys printed on terminal)
 
-2. Making sure you have configured MetaMask, visit http://localhost:4200 in your browser.
+4. Start the local server and go to `localhost:4200`
 
-3. Send MetaCoins!
+```bash
+npm start
+```
 
 ## Testing
 
-1. Running the Angular component tests:
-  ```bash
-  ng test
-  ```
+Running the Truffle tests:
 
-2. Running the Truffle tests:
-  ```bash
-  truffle test
-  ```
-
-3. Running Protactor end-to-end tests
-
-  ```bash
-  ng e2e
-  ```
-## Releasing
-Using the Angular CLI you can build a distributable of your app. Will be placed in `dist/`
-
-  ```bash
-  ng build
-  ```
-
-## FAQ
-
-* __Where can I find more documentation?__
-
-This Truffle box is a union of [Truffle](http://truffleframework.com/) and an Angular setup created with [Angular CLI](https://cli.angular.io/).
-For solidity compilation and Ethereum related issues, try the [Truffle documentation](http://truffleframework.com/docs/).
-For Angular CLI and typescript issues, refer to the [Angular CLI documentation](https://github.com/angular/angular-cli/wiki)
+```bash
+truffle test
+```
