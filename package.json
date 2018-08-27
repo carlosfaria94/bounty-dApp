@@ -1,6 +1,6 @@
 {
-  "name": "angular-truffle-box",
-  "version": "0.0.0",
+  "name": "bounty-dapp",
+  "version": "1.0.0",
   "license": "MIT",
   "scripts": {
     "ng": "ng",
