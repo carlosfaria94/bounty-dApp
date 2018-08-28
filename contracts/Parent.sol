@@ -42,8 +42,7 @@ contract Parent is Ownable, Destructible {
     * @param key_ bytes32 organization key
     * @return address address of the organization contract
     */
-    function getOrganisation(bytes32 key_) public view returns (address)
-    {
+    function getOrganisation(bytes32 key_) public view returns (address) {
         return organisations[key_];
     }
 
@@ -54,12 +53,10 @@ contract Parent is Ownable, Destructible {
     */
     function upgradeOrganisation(bytes32 key_, address newOrgAddress) public onlyOwner() {
         address organisationAddress = organisations[key_];
-        OrganisationInterface oldOrg = OrganisationInterface(organisationAddress);
-        OrganisationInterface newOrg = OrganisationInterface(newOrgAddress);
-        address entryStorage = oldOrg.entryStorageAddr();
+        address entryStorage = OrganisationInterface(organisationAddress).entryStorageAddr();
 
-        newOrg.setDataStore(entryStorage);
-        oldOrg.kill(newOrgAddress);
+        OrganisationInterface(newOrgAddress).setDataStore(entryStorage);
+        OrganisationInterface(organisationAddress).kill(newOrgAddress);
 
         organisations[key_] = newOrgAddress;
         emit OrganisationUpgraded(newOrgAddress, block.timestamp);

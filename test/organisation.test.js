@@ -1,7 +1,8 @@
-const EntryStorage = artifacts.require('EntryStorage');
+const Organisation = artifacts.require('Organisation');
+const Parent = artifacts.require('Parent');
 const { expectThrow } = require('./helpers/expectThrow');
 
-contract('EntryStorage Tests', async accounts => {
+contract('Organisation Tests', async accounts => {
   const owner = accounts[0];
   const alice = accounts[1];
   const bob = accounts[2];
@@ -15,24 +16,36 @@ contract('EntryStorage Tests', async accounts => {
   let twoEther = web3.toWei(1, 'ether');
 
   // Contract instance
-  let entryStorage;
+  let organisation;
+
+  it('should match address of deployed organisation', async () => {
+    let parent = await Parent.deployed();
+    organisation = await Organisation.deployed();
+
+    await parent.registerOrganisation.sendTransaction(1, Organisation.address, {
+      from: owner
+    });
+    let deployedAddr = await parent.getOrganisation.call(1, {
+      from: owner
+    });
+
+    assert.equal(Organisation.address, deployedAddr, 'the address not match');
+  });
 
   it('should have no entries on deploy', async () => {
-    entryStorage = await EntryStorage.new();
-    let entryCount = await entryStorage.getEntryCount();
+    let entryCount = await organisation.getEntryCount();
     assert.equal(entryCount.toNumber(), 0, 'initial entry count incorrect.');
   });
 
   it('should throw when geting an entry which does not exist', async () => {
-    expectThrow(entryStorage.getEntry(69));
+    expectThrow(organisation.getEntry(69));
   });
 
   it('should successfully add an entry', async () => {
     // Create an entry and bounty amount should be deducted from the owner that add the entry
     let account_one_starting_balance = await web3.eth.getBalance(owner);
 
-    const tx_hash = await entryStorage.addEntry.sendTransaction(
-      owner,
+    const tx_hash = await organisation.addEntry.sendTransaction(
       digest,
       hashFunction,
       size,
@@ -53,7 +66,7 @@ contract('EntryStorage Tests', async accounts => {
       oneEther
     );
 
-    const result = await entryStorage.getEntry.call(1);
+    const result = await organisation.getEntry.call(1);
     const actual_id = result[0];
     const actual_owner = result[1];
     const actual_state = result[8].toNumber();
@@ -77,29 +90,19 @@ contract('EntryStorage Tests', async accounts => {
   });
 
   it('should exist one entry', async () => {
-    let entryCount = await entryStorage.getEntryCount();
+    let entryCount = await organisation.getEntryCount();
     assert.equal(entryCount.toNumber(), 1, 'should exist only one entry.');
   });
 
   it('should successfully submit work twice to the entry', async () => {
-    await entryStorage.submit.sendTransaction(
-      1,
-      alice,
-      digest,
-      hashFunction,
-      size,
-      { from: alice }
-    );
-    await entryStorage.submit.sendTransaction(
-      1,
-      bob,
-      digest,
-      hashFunction,
-      size,
-      { from: bob }
-    );
+    await organisation.submit.sendTransaction(1, digest, hashFunction, size, {
+      from: alice
+    });
+    await organisation.submit.sendTransaction(1, digest, hashFunction, size, {
+      from: bob
+    });
 
-    const result = await entryStorage.getEntry.call(1);
+    const result = await organisation.getEntry.call(1);
     const actual_submission_count = result[7].toNumber();
     const actual_state = result[8].toNumber();
 
